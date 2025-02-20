@@ -10,6 +10,8 @@
 
 专为 OpenWebUI 设计的用量监控和用户余额管理面板。只需要向 OpenWebUI 添加一个简单的[函数](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/functions/openwebui_monitor.py)，就能在一个面板统一查看用户使用情况和余额。
 
+> **注意**：如果你使用的是 OpenWebUI 0.5.8 及以上版本，请确保将[函数](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/functions/openwebui_monitor.py)更新到最新版本。
+
 ## 特性
 
 - 为 OpenWebUI 中的每个模型设置价格；
@@ -19,7 +21,7 @@
 
 ## 部署
 
-支持 Vercel 一键部署 [![Deploy on Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FVariantConst%2FOpenWebUI-Monitor&project-name=openwebui-monitor&repository-name=openwebui-monitor&env=OPENWEBUI_DOMAIN,OPENWEBUI_API_KEY,ACCESS_TOKEN,API_KEY) 和 Docker 部署。详见 [部署指南](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/tutorials/zh-cn/deployment_guide_zh.md)。
+支持 Vercel 一键部署 [![Deploy on Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FVariantConst%2FOpenWebUI-Monitor&project-name=openwebui-monitor&repository-name=openwebui-monitor&env=OPENWEBUI_DOMAIN,OPENWEBUI_API_KEY,ACCESS_TOKEN,API_KEY) 和 Docker 部署。**详见 [部署指南](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/tutorials/zh-cn/deployment_guide_zh.md)。详见 [部署指南](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/tutorials/zh-cn/deployment_guide_zh.md)。详见 [部署指南](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/tutorials/zh-cn/deployment_guide_zh.md)。**
 
 ## 更新
 
@@ -51,6 +53,36 @@ sudo docker compose up -d
 | INIT_BALANCE                | 用户初始余额                                                                                                               | `0`    |
 | COST_ON_INLET               | inlet 时的预扣费金额。可以是所有模型统一的固定数字（如 `0.1`），也可以是针对不同模型的配置（如 `gpt-4:0.32,gpt-3.5:0.01`） | `0`    |
 
+## 函数变量配置
+
+| 变量名       | 说明                                                                     |
+| ------------ | ------------------------------------------------------------------------ |
+| Api Endpoint | 填你部署的 OpenWebUI Monitor 后端域名或 OpenWebUI 容器内可访问的 ip 地址 |
+| Api Key      | 填后端部署的 `API_KEY` 环境变量                                          |
+| Language     | 消息显示语言 (en/zh)                                                     |
+
+## 常见问题
+
+### 1. `OPENWEBUI_DOMAIN` 环境变量怎么填写？
+
+填写原则是在 OpenWebUI Monitor 的容器内能访问到这个地址。
+
+- 推荐填写 OpenWebUI 的公网域名，例如 `https://chat.example.com`。
+- 假如你的 OpenWebUI Monitor 部署在同一台机器，则这个环境变量也可以填 `http://[Docker容器宿主机的本地ip]:[OpenWebUI后端服务端口]`。可以通过 `ifconfig | grep "inet "` 获取宿主机的本地 ip。
+- **不可以**填 `http://127.0.0.1:port` 或省略 `http://`。
+
+### 2. `Api Endpoint` 函数参数怎么填写？
+
+填你部署的 OpenWebUI Monitor 后端域名或 OpenWebUI 容器内可访问的 ip 地址。例如 `http://[宿主机的本地ip]:7878`，其中 `7878` 是 OpenWebUI Monitor 的默认端口。
+
+### 3. 为什么用户管理页面看不见用户？
+
+只有用户首次进行聊天请求后，OpenWebUI Monitor 才会开始追踪该用户的信息。
+
 <h2>Gallery</h2>
 
 ![](https://github.com/user-attachments/assets/2777c1fc-a8c6-4397-9665-a6a559d4bab1)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=VariantConst/OpenWebUI-Monitor&type=Date)](https://star-history.com/#VariantConst/OpenWebUI-Monitor&Date)

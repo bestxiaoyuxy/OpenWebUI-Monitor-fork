@@ -56,7 +56,8 @@ sudo docker compose up -d
 
 ## 二、安装 OpenWebUI 函数插件（二选一）
 
-### 显式显示计费信息函数
+<details>
+<summary><strong>方法一（推荐）：显式显示计费信息函数</strong></summary>
 
 1. 打开 OpenWebUI 管理员面板的 `函数` 页面，点击 `+` 创建新函数，将 [这个函数](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/functions/openwebui_monitor.py) 的代码粘贴进去并保存。
 
@@ -71,7 +72,9 @@ sudo docker compose up -d
 
 4. 该函数会默认在每个回复消息顶部直接显示计费信息
 
-### 隐式（手动触发）显示计费信息函数[可选]
+</details>
+<details>
+<summary><strong>方法二：隐式（手动触发）显示计费信息函数</strong></summary>
 
 若你选择隐式显示计费，则取而代之用 [这个函数](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/functions/openwebui_monitor_invisible.py) 的代码粘贴进去并保存，同样需要启用函数，并点击 `…` 打开详细配置，全局启用函数。但是要额外再安装一个 Action 函数插件
 
@@ -85,3 +88,5 @@ sudo docker compose up -d
 ![CleanShot 2024-12-10 at 13 41 08](https://github.com/user-attachments/assets/e999d022-339e-41d3-9bf9-a6f8d9877fe8)
 
 手动点击底部的"计费信息"按钮来显示消息，但要注意的是该方式只能显示对话最新（最底部）的消息计费信息
+
+</details>

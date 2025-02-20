@@ -10,6 +10,9 @@ async function ensureModelPricesTableExists() {
   const defaultOutputPrice = parseFloat(
     process.env.DEFAULT_MODEL_OUTPUT_PRICE || "60"
   );
+  const defaultPerMsgPrice = parseFloat(
+    process.env.DEFAULT_MODEL_PER_MSG_PRICE || "-1"
+  );
 
   await query(
     `CREATE TABLE IF NOT EXISTS model_prices (
@@ -17,10 +20,10 @@ async function ensureModelPricesTableExists() {
       model_name TEXT NOT NULL,
       input_price DECIMAL(10, 6) DEFAULT CAST($1 AS DECIMAL(10, 6)),
       output_price DECIMAL(10, 6) DEFAULT CAST($2 AS DECIMAL(10, 6)),
-      per_msg_price DECIMAL(10, 6) DEFAULT -1,
+      per_msg_price DECIMAL(10, 6) DEFAULT CAST($3 AS DECIMAL(10, 6)),
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );`,
-    [defaultInputPrice, defaultOutputPrice]
+    [defaultInputPrice, defaultOutputPrice, defaultPerMsgPrice]
   );
 
   // 为现有记录添加 per_msg_price 字段（如果不存在）
@@ -28,12 +31,13 @@ async function ensureModelPricesTableExists() {
     `DO $$ 
     BEGIN 
       BEGIN
-        ALTER TABLE model_prices ADD COLUMN per_msg_price DECIMAL(10, 6) DEFAULT -1;
+        ALTER TABLE model_prices ADD COLUMN per_msg_price DECIMAL(10, 6) DEFAULT CAST($1 AS DECIMAL(10, 6));
         ALTER TABLE model_prices ADD COLUMN updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
       EXCEPTION 
         WHEN duplicate_column THEN NULL;
       END;
-    END $$;`
+    END $$;`,
+    [defaultPerMsgPrice]
   );
 }
 
@@ -47,13 +51,17 @@ export async function getOrCreateModelPrice(
   name: string
 ): Promise<ModelPrice> {
   try {
+    const defaultPerMsgPrice = parseFloat(
+      process.env.DEFAULT_MODEL_PER_MSG_PRICE || "-1"
+    );
+
     const result = await query(
-      `INSERT INTO model_prices (model_id, model_name, updated_at)
-       VALUES ($1, $2, CURRENT_TIMESTAMP)
+      `INSERT INTO model_prices (model_id, model_name, per_msg_price, updated_at)
+       VALUES ($1, $2, CAST($3 AS DECIMAL(10, 6)), CURRENT_TIMESTAMP)
        ON CONFLICT (model_id) DO UPDATE 
        SET model_name = $2, updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
-      [id, name]
+      [id, name, defaultPerMsgPrice]
     );
 
     return {

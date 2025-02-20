@@ -145,6 +145,17 @@ export async function getOrCreateModelPrices(
   try {
     client = await pool.connect();
 
+    // 获取默认价格
+    const defaultInputPrice = parseFloat(
+      process.env.DEFAULT_MODEL_INPUT_PRICE || "60"
+    );
+    const defaultOutputPrice = parseFloat(
+      process.env.DEFAULT_MODEL_OUTPUT_PRICE || "60"
+    );
+    const defaultPerMsgPrice = parseFloat(
+      process.env.DEFAULT_MODEL_PER_MSG_PRICE || "-1"
+    );
+
     // 1. 首先获取所有已存在的模型价格
     const modelIds = models.map((m) => m.id);
     const baseModelIds = models.map((m) => m.base_model_id).filter((id) => id);
@@ -177,9 +188,9 @@ export async function getOrCreateModelPrices(
         return [
           m.id,
           m.name,
-          baseModel?.input_price ?? null,
-          baseModel?.output_price ?? null,
-          baseModel?.per_msg_price ?? null,
+          baseModel?.input_price ?? defaultInputPrice,
+          baseModel?.output_price ?? defaultOutputPrice,
+          baseModel?.per_msg_price ?? defaultPerMsgPrice,
         ];
       });
 

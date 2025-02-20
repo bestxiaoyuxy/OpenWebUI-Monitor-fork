@@ -58,7 +58,8 @@ The deployment is now complete! Publish the site to the public as needed. To mod
 
 ## 2. Installing the OpenWebUI Function Plugin (Choose One)
 
-### Explicit Billing Information Display Function
+<details>
+<summary><strong>Method 1 (Recommended): Explicit Billing Information Display Function</strong></summary>
 
 1. Open the Functions page in the OpenWebUI Admin Panel. Click + to create a new function, then paste the code from [this function](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/functions/openwebui_monitor.py) and save it.
 
@@ -73,7 +74,9 @@ The deployment is now complete! Publish the site to the public as needed. To mod
 
 4. This function will display billing information at the top of each reply message by default.
 
-### Implicit (Manually Triggered) Billing Information Display Function [Optional]
+</details>
+<details>
+<summary><strong>Method 2: Implicit (Manually Triggered) Billing Information Display Function</strong></summary>
 
 If you prefer implicit billing display, use [this function](https://github.com/VariantConst/OpenWebUI-Monitor/blob/main/resources/functions/openwebui_monitor_invisible.py) instead. Follow the same steps to enable and configure the function globally. Additionally, you'll need to install an Action function plugin.
 
@@ -86,3 +89,5 @@ Similarly, add a new function and paste the code from the [Action function](http
 ![CleanShot 2024-12-10 at 13 41 08](https://github.com/user-attachments/assets/e999d022-339e-41d3-9bf9-a6f8d9877fe8)
 
 Click the "Billing Information" button at the bottom to display the message. Note that this method can only show billing information for the latest (bottom-most) message in the conversation.
+
+</details>
