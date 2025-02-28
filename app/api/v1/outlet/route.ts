@@ -94,12 +94,12 @@ export async function POST(req: Request) {
     let inputTokens: number;
     let outputTokens: number;
     if (
-      lastMessage.info &&
-      lastMessage.info.prompt_tokens &&
-      lastMessage.info.completion_tokens
+      lastMessage.usage &&
+      lastMessage.usage.prompt_tokens &&
+      lastMessage.usage.completion_tokens
     ) {
-      inputTokens = lastMessage.info.prompt_tokens;
-      outputTokens = lastMessage.info.completion_tokens;
+      inputTokens = lastMessage.usage.prompt_tokens;
+      outputTokens = lastMessage.usage.completion_tokens;
     } else {
       outputTokens = encode(lastMessage.content).length;
       const totalTokens = data.body.messages.reduce(
