@@ -83,10 +83,22 @@
 
   "models": {
     "title": "模型管理",
-    "description": "管理所有可用模型的价格配置。点击模型图标可进行单独测试，测试结果将显示在图标右上角。",
+    "description": "管理所有可用模型的价格配置。",
     "testAll": "测试全部模型",
     "exportConfig": "导出配置",
     "importConfig": "导入配置",
+    "syncWithBaseModel": "同步上游模型价格",
+    "syncAllDerivedModels": "同步所有派生模型价格",
+    "syncSuccess": "价格同步成功",
+    "syncFail": "价格同步失败",
+    "syncAllSuccess": "所有派生模型价格同步成功",
+    "syncAllFail": "部分派生模型价格同步失败",
+    "noBaseModel": "该模型没有上游模型",
+    "baseModelNotFound": "未找到上游模型",
+    "noDerivedModels": "没有找到派生模型",
+    "syncing": "同步中",
+    "syncTooltip": "将基础模型的价格同步到所有派生模型。这将根据基础模型的价格更新所有派生模型的价格。",
+    "testTooltip": "点击模型图标可进行单独测试，测试结果将显示在图标右上角。",
     "test": {
       "status": {
         "valid": "有效",

@@ -83,10 +83,22 @@
 
   "models": {
     "title": "Model Management",
-    "description": "Manage price configurations for all available models. Click model icon to test individually, test results will be shown in the top right corner of the icon.",
+    "description": "Manage price configurations for all available models.",
     "testAll": "Test All Models",
     "exportConfig": "Export",
     "importConfig": "Import",
+    "syncWithBaseModel": "Sync with Base Model",
+    "syncAllDerivedModels": "Sync All Derived Models",
+    "syncSuccess": "Price synced successfully",
+    "syncFail": "Failed to sync price",
+    "syncAllSuccess": "All derived models synced successfully",
+    "syncAllFail": "Some derived models failed to sync",
+    "noBaseModel": "This model has no base model",
+    "baseModelNotFound": "Base model not found",
+    "noDerivedModels": "No derived models found",
+    "syncing": "Syncing",
+    "syncTooltip": "Sync prices from base models to all derived models. This will update prices of all derived models based on their base model prices.",
+    "testTooltip": "Click model icon to test individually, test results will be shown in the top right corner of the icon.",
     "test": {
       "status": {
         "valid": "Valid",

@@ -40,6 +40,7 @@ interface Model {
   output_price: number;
   per_msg_price: number;
   testStatus?: "success" | "error" | "testing";
+  syncStatus?: "syncing" | "success" | "error";
 }
 
 const TestStatusIndicator = ({ status }: { status: Model["testStatus"] }) => {
@@ -257,6 +258,7 @@ export default function ModelsPage() {
   const [testing, setTesting] = useState(false);
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [isTestComplete, setIsTestComplete] = useState(false);
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     const fetchModels = async () => {
@@ -407,6 +409,60 @@ export default function ModelsPage() {
       setModels((prev) =>
         prev.map((m) => (m.id === model.id ? { ...m, testStatus: "error" } : m))
       );
+    }
+  };
+
+  const handleSyncAllDerivedModels = async () => {
+    try {
+      setSyncing(true);
+
+      const response = await fetch("/api/v1/models/sync-all-prices", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || t("models.syncFail"));
+      }
+
+      // 更新模型数据
+      if (data.syncedModels && data.syncedModels.length > 0) {
+        setModels((prev) =>
+          prev.map((model) => {
+            const syncedModel = data.syncedModels.find(
+              (m: any) => m.id === model.id && m.success
+            );
+            if (syncedModel) {
+              return {
+                ...model,
+                input_price: syncedModel.input_price,
+                output_price: syncedModel.output_price,
+                per_msg_price: syncedModel.per_msg_price,
+              };
+            }
+            return model;
+          })
+        );
+
+        if (data.syncedModels.every((m: any) => m.success)) {
+          toast.success(t("models.syncAllSuccess"));
+        } else {
+          toast.warning(t("models.syncAllFail"));
+        }
+      } else {
+        toast.info(t("models.noDerivedModels"));
+      }
+    } catch (error) {
+      console.error("Sync all derived models failed:", error);
+      toast.error(
+        error instanceof Error ? error.message : t("models.syncFail")
+      );
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -842,38 +898,62 @@ export default function ModelsPage() {
           variant="default"
           size="default"
           onClick={handleTestModels}
-          className="relative flex items-center"
+          className="relative flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white shadow-sm hover:shadow-md transition-all duration-200"
           disabled={testing && !isTestComplete}
         >
           <motion.div
             animate={testing ? { rotate: 360 } : { rotate: 0 }}
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-            className="mr-2"
           >
             <ExperimentOutlined className="h-4 w-4" />
           </motion.div>
           {testing ? t("models.testing") : t("models.testAll")}
+          <Tooltip title={t("models.testTooltip")}>
+            <InfoCircleOutlined className="h-3.5 w-3.5 text-white/80 hover:text-white" />
+          </Tooltip>
+        </Button>
+
+        <Button
+          variant="default"
+          size="default"
+          onClick={handleSyncAllDerivedModels}
+          className="relative flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-white shadow-sm hover:shadow-md transition-all duration-200"
+          disabled={syncing}
+        >
+          <motion.div
+            animate={syncing ? { rotate: 360 } : { rotate: 0 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+          </motion.div>
+          {syncing ? t("models.syncing") : t("models.syncAllDerivedModels")}
+          <Tooltip title={t("models.syncTooltip")}>
+            <InfoCircleOutlined className="h-3.5 w-3.5 text-white/80 hover:text-white" />
+          </Tooltip>
         </Button>
 
         <Button
           variant="outline"
           size="default"
           onClick={handleExportPrices}
-          className="flex items-center"
-        >
-          <DownloadOutlined className="mr-2 h-4 w-4" />
-          {t("models.exportConfig")}
-        </Button>
-
-        <Button
-          variant="outline"
-          size="default"
-          className="flex items-center"
-          onClick={() => document.getElementById("import-input")?.click()}
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white hover:bg-gray-50 text-zinc-800 border border-zinc-200 shadow-sm hover:shadow-md transition-all duration-200"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-4 w-4 mr-2"
+            className="h-4 w-4"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -883,6 +963,29 @@ export default function ModelsPage() {
               strokeLinecap="round"
               strokeLinejoin="round"
               d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+            />
+          </svg>
+          {t("models.exportConfig")}
+        </Button>
+
+        <Button
+          variant="outline"
+          size="default"
+          className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white hover:bg-gray-50 text-zinc-800 border border-zinc-200 shadow-sm hover:shadow-md transition-all duration-200"
+          onClick={() => document.getElementById("import-input")?.click()}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
             />
           </svg>
           {t("models.importConfig")}

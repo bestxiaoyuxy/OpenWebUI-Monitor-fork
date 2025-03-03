@@ -92,6 +92,7 @@ export async function ensureTablesExist() {
       CREATE TABLE IF NOT EXISTS model_prices (
         id TEXT PRIMARY KEY,
         name TEXT NOT NULL,
+        base_model_id TEXT,
         input_price NUMERIC(10, 6) DEFAULT ${defaultInputPrice},
         output_price NUMERIC(10, 6) DEFAULT ${defaultOutputPrice},
         per_msg_price NUMERIC(10, 6) DEFAULT ${defaultPerMsgPrice},
@@ -106,6 +107,19 @@ export async function ensureTablesExist() {
         BEGIN
           ALTER TABLE model_prices 
           ADD COLUMN per_msg_price NUMERIC(10, 6) DEFAULT ${defaultPerMsgPrice};
+        EXCEPTION 
+          WHEN duplicate_column THEN NULL;
+        END;
+      END $$;
+    `);
+
+    // 检查并添加 base_model_id 列（如果不存在）
+    await client.query(`
+      DO $$ 
+      BEGIN 
+        BEGIN
+          ALTER TABLE model_prices 
+          ADD COLUMN base_model_id TEXT;
         EXCEPTION 
           WHEN duplicate_column THEN NULL;
         END;
@@ -178,8 +192,21 @@ export async function getOrCreateModelPrices(
       baseModelsResult.rows.map((row) => [row.id, row])
     );
 
-    // 3. 批量插入或更新缺失的模型
+    // 3. 更新所有模型的名称并插入缺失的模型
+    const modelsToUpdate = models.filter((m) => existingModels.has(m.id));
     const missingModels = models.filter((m) => !existingModels.has(m.id));
+
+    // 3.1 更新现有模型的名称
+    if (modelsToUpdate.length > 0) {
+      for (const model of modelsToUpdate) {
+        await client.query(`UPDATE model_prices SET name = $2 WHERE id = $1`, [
+          model.id,
+          model.name,
+        ]);
+      }
+    }
+
+    // 3.2 插入缺失的模型
     if (missingModels.length > 0) {
       const values = missingModels.map((m) => {
         const baseModel = m.base_model_id
@@ -206,8 +233,6 @@ export async function getOrCreateModelPrices(
       const result = await client.query<ModelPriceRow>(
         `INSERT INTO model_prices (id, name, input_price, output_price, per_msg_price)
          VALUES ${placeholders}
-         ON CONFLICT (id) DO UPDATE 
-         SET name = EXCLUDED.name
          RETURNING *`,
         values.flat()
       );
@@ -215,8 +240,18 @@ export async function getOrCreateModelPrices(
       result.rows.forEach((row) => existingModels.set(row.id, row));
     }
 
+    // 4. 重新获取所有模型的最新数据
+    const updatedModelsResult = await client.query<ModelPriceRow>(
+      `SELECT * FROM model_prices WHERE id = ANY($1::text[])`,
+      [modelIds]
+    );
+
+    const updatedModels = new Map(
+      updatedModelsResult.rows.map((row) => [row.id, row])
+    );
+
     return models.map((m) => {
-      const row = existingModels.get(m.id)!;
+      const row = updatedModels.get(m.id)!;
       return {
         id: row.id,
         name: row.name,

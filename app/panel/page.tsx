@@ -109,8 +109,8 @@ export default function PanelPage() {
   const fetchUsageData = async (range: [Date, Date]) => {
     setLoading(true);
     try {
-      const startTime = dayjs(range[0]).toISOString();
-      const endTime = dayjs(range[1]).toISOString();
+      const startTime = dayjs(range[0]).startOf("day").toISOString();
+      const endTime = dayjs(range[1]).endOf("day").toISOString();
 
       const url = `/api/v1/panel/usage?startTime=${startTime}&endTime=${endTime}`;
       const response = await fetch(url);
@@ -156,8 +156,14 @@ export default function PanelPage() {
       }
 
       // 添加日期范围
-      searchParams.append("startDate", dayjs(range[0]).format("YYYY-MM-DD"));
-      searchParams.append("endDate", dayjs(range[1]).format("YYYY-MM-DD"));
+      searchParams.append(
+        "startDate",
+        dayjs(range[0]).startOf("day").format("YYYY-MM-DD")
+      );
+      searchParams.append(
+        "endDate",
+        dayjs(range[1]).endOf("day").format("YYYY-MM-DD")
+      );
 
       const response = await fetch(
         `/api/v1/panel/records?${searchParams.toString()}`
@@ -185,8 +191,8 @@ export default function PanelPage() {
       const response = await fetch("/api/v1/panel/usage");
       const data = await response.json();
 
-      const minTime = new Date(data.timeRange.minTime);
-      const maxTime = new Date(data.timeRange.maxTime);
+      const minTime = dayjs(data.timeRange.minTime).startOf("day").toDate();
+      const maxTime = dayjs(data.timeRange.maxTime).endOf("day").toDate();
       setAvailableTimeRange({ minTime, maxTime });
 
       // 设置为全部时间范围

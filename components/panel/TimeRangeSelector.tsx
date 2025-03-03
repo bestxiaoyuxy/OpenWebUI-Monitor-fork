@@ -139,10 +139,10 @@ export default function TimeRangeSelector({
       label: t("panel.timeRange.timeOptions.all"),
       icon: CalendarCheck,
       getRange: () =>
-        [availableTimeRange.minTime, availableTimeRange.maxTime] as [
-          Date,
-          Date
-        ],
+        [
+          dayjs(availableTimeRange.minTime).startOf("day").toDate(),
+          dayjs(availableTimeRange.maxTime).endOf("day").toDate(),
+        ] as [Date, Date],
     },
   ];
 

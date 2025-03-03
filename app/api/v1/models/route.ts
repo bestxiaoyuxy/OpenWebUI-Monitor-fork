@@ -68,24 +68,50 @@ export async function GET() {
 
     // Get price information for all models
     const modelsWithPrices = await getOrCreateModelPrices(
-      data.data.map((item) => ({
-        id: String(item.id),
-        name: String(item.name),
-        base_model_id: item.info?.base_model_id,
-      }))
+      data.data.map((item) => {
+        // 处理形如 gemini_search.gemini-2.0-flash 的派生模型ID
+        let baseModelId = item.info?.base_model_id;
+
+        // 如果没有明确的base_model_id，尝试从ID中提取
+        if (!baseModelId && item.id) {
+          const idParts = String(item.id).split(".");
+          if (idParts.length > 1) {
+            baseModelId = idParts[idParts.length - 1];
+          }
+        }
+
+        return {
+          id: String(item.id),
+          name: String(item.name),
+          base_model_id: baseModelId,
+        };
+      })
     );
 
-    const validModels = data.data.map((item, index) => ({
-      id: modelsWithPrices[index].id,
-      base_model_id: item.info?.base_model_id || "",
-      name: modelsWithPrices[index].name,
-      imageUrl: item.info?.meta?.profile_image_url || "/static/favicon.png",
-      system_prompt: item.info?.params?.system || "",
-      input_price: modelsWithPrices[index].input_price,
-      output_price: modelsWithPrices[index].output_price,
-      per_msg_price: modelsWithPrices[index].per_msg_price,
-      updated_at: modelsWithPrices[index].updated_at,
-    }));
+    const validModels = data.data.map((item, index) => {
+      // 处理形如 gemini_search.gemini-2.0-flash 的派生模型ID
+      let baseModelId = item.info?.base_model_id || "";
+
+      // 如果没有明确的base_model_id，尝试从ID中提取
+      if (!baseModelId && item.id) {
+        const idParts = String(item.id).split(".");
+        if (idParts.length > 1) {
+          baseModelId = idParts[idParts.length - 1];
+        }
+      }
+
+      return {
+        id: modelsWithPrices[index].id,
+        base_model_id: baseModelId,
+        name: modelsWithPrices[index].name,
+        imageUrl: item.info?.meta?.profile_image_url || "/static/favicon.png",
+        system_prompt: item.info?.params?.system || "",
+        input_price: modelsWithPrices[index].input_price,
+        output_price: modelsWithPrices[index].output_price,
+        per_msg_price: modelsWithPrices[index].per_msg_price,
+        updated_at: modelsWithPrices[index].updated_at,
+      };
+    });
 
     return NextResponse.json(validModels);
   } catch (error) {
