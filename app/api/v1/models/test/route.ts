@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
+import { verifyApiToken } from "@/lib/auth";
 
 export async function POST(req: Request) {
+  const authError = verifyApiToken(req);
+  if (authError) {
+    return authError;
+  }
+
   try {
     const { modelId } = await req.json();
 

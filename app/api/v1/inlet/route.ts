@@ -9,7 +9,6 @@ export async function POST(req: Request) {
     const user = await getOrCreateUser(data.user);
     const modelId = data.body?.model;
 
-    // 如果用户被拉黑,返回余额为 -1
     if (user.deleted) {
       return NextResponse.json({
         success: true,
@@ -18,10 +17,8 @@ export async function POST(req: Request) {
       });
     }
 
-    // 获取预扣费金额
     const inletCost = getModelInletCost(modelId);
 
-    // 预扣费
     if (inletCost > 0) {
       const userResult = await query(
         `UPDATE users 

@@ -263,7 +263,12 @@ export default function ModelsPage() {
   useEffect(() => {
     const fetchModels = async () => {
       try {
-        const response = await fetch("/api/v1/models");
+        const token = localStorage.getItem("access_token");
+        const response = await fetch("/api/v1/models", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!response.ok) {
           throw new Error(t("error.model.failToFetchModels"));
         }
@@ -291,7 +296,12 @@ export default function ModelsPage() {
   useEffect(() => {
     const fetchApiKey = async () => {
       try {
-        const response = await fetch("/api/config/key");
+        const token = localStorage.getItem("access_token");
+        const response = await fetch("/api/v1/config/key", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!response.ok) {
           throw new Error(
             `${t("error.model.failToFetchApiKey")}: ${response.status}`
@@ -342,9 +352,13 @@ export default function ModelsPage() {
       const per_msg_price =
         field === "per_msg_price" ? validValue : model.per_msg_price;
 
+      const token = localStorage.getItem("access_token");
       const response = await fetch("/api/v1/models/price", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           updates: [
             {
@@ -416,10 +430,12 @@ export default function ModelsPage() {
     try {
       setSyncing(true);
 
+      const token = localStorage.getItem("access_token");
       const response = await fetch("/api/v1/models/sync-all-prices", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -429,7 +445,6 @@ export default function ModelsPage() {
         throw new Error(data.error || t("models.syncFail"));
       }
 
-      // 更新模型数据
       if (data.syncedModels && data.syncedModels.length > 0) {
         setModels((prev) =>
           prev.map((model) => {
@@ -655,11 +670,12 @@ export default function ModelsPage() {
     const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     try {
+      const token = localStorage.getItem("access_token");
       const response = await fetch("/api/v1/models/test", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${apiKey}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           modelId: model.id,
@@ -725,7 +741,6 @@ export default function ModelsPage() {
     }
   };
 
-  // 修改表格样式
   const tableClassName = `
     [&_.ant-table]:!border-b-0 
     [&_.ant-table-container]:!rounded-xl 
@@ -746,7 +761,6 @@ export default function ModelsPage() {
     [&_.ant-table-cell:last-child]:!pr-6
   `;
 
-  // 修改移动端卡片组件
   const MobileCard = ({ record }: { record: Model }) => {
     const isPerMsgEnabled = record.per_msg_price >= 0;
 
@@ -821,7 +835,6 @@ export default function ModelsPage() {
     );
   };
 
-  // 将 renderPriceCell 修改为接收一个额外的 showTooltip 参数
   const renderPriceCell = (
     field: "input_price" | "output_price" | "per_msg_price",
     record: Model,
@@ -841,9 +854,7 @@ export default function ModelsPage() {
           try {
             await handlePriceUpdate(record.id, field, value);
             setEditingCell(null);
-          } catch {
-            // 错误已经在 handlePriceUpdate 中处理
-          }
+          } catch {}
         }}
         t={t}
         disabled={isDisabled}
@@ -875,7 +886,6 @@ export default function ModelsPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24 space-y-8">
-      {/* 添加 Toaster 组件 */}
       <Toaster
         richColors
         position="top-center"
@@ -884,7 +894,6 @@ export default function ModelsPage() {
         duration={1500}
       />
 
-      {/* 页面标题部分 */}
       <div className="space-y-4">
         <h1 className="text-3xl font-bold tracking-tight">
           {t("models.title")}
@@ -892,7 +901,6 @@ export default function ModelsPage() {
         <p className="text-muted-foreground">{t("models.description")}</p>
       </div>
 
-      {/* 操作按钮组 */}
       <div className="flex flex-wrap gap-4">
         <Button
           variant="default"
@@ -1005,7 +1013,6 @@ export default function ModelsPage() {
         />
       </div>
 
-      {/* 替换原有的TestProgress组件 */}
       <TestProgressPanel
         isVisible={testing || isTestComplete}
         models={models}
@@ -1013,7 +1020,6 @@ export default function ModelsPage() {
         t={t}
       />
 
-      {/* 桌面端表格视图 */}
       <div className="hidden sm:block">
         <div className="rounded-xl border border-border/40 bg-card shadow-sm overflow-hidden">
           {loading ? (
@@ -1034,7 +1040,6 @@ export default function ModelsPage() {
         </div>
       </div>
 
-      {/* 移动端卡片视图 */}
       <div className="sm:hidden">
         {loading ? (
           <LoadingState t={t} />

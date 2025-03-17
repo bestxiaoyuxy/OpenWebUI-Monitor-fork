@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { pool } from "@/lib/db";
+import { pool } from "@/lib/db/client";
+import { verifyApiToken } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
+  const authError = verifyApiToken(request);
+  if (authError) {
+    return authError;
+  }
+
   try {
     const data = await request.json();
     const { modelId } = data;
@@ -15,7 +21,6 @@ export async function POST(request: NextRequest) {
 
     const client = await pool.connect();
     try {
-      // 1. 获取派生模型信息
       const derivedModelResult = await client.query(
         `SELECT id, name, base_model_id FROM model_prices WHERE id = $1`,
         [modelId]
@@ -28,13 +33,11 @@ export async function POST(request: NextRequest) {
       const derivedModel = derivedModelResult.rows[0];
       let baseModelId = derivedModel.base_model_id;
 
-      // 如果数据库中没有base_model_id，尝试从ID中提取
       if (!baseModelId) {
         const idParts = modelId.split(".");
         if (idParts.length > 1) {
           baseModelId = idParts[idParts.length - 1];
 
-          // 更新数据库中的base_model_id
           await client.query(
             `UPDATE model_prices SET base_model_id = $2 WHERE id = $1`,
             [modelId, baseModelId]
@@ -49,7 +52,6 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // 2. 获取上游模型价格
       const baseModelResult = await client.query(
         `SELECT input_price, output_price, per_msg_price FROM model_prices WHERE id = $1`,
         [baseModelId]
@@ -64,7 +66,6 @@ export async function POST(request: NextRequest) {
 
       const baseModel = baseModelResult.rows[0];
 
-      // 3. 更新派生模型价格
       const updateResult = await client.query(
         `UPDATE model_prices 
          SET 

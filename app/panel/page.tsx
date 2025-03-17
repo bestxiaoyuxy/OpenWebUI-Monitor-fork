@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Head from "next/head";
-import dayjs from "dayjs";
+import dayjs from "@/lib/dayjs";
 import type { TablePaginationConfig } from "antd/es/table";
 import type { SorterResult } from "antd/es/table/interface";
 import type { FilterValue } from "antd/es/table/interface";
@@ -72,7 +72,7 @@ export default function PanelPage() {
   const [loading, setLoading] = useState(true);
   const [tableLoading, setTableLoading] = useState(true);
   const [dateRange, setDateRange] = useState<[Date, Date]>([
-    new Date(), // 将在加载数据后更新
+    new Date(),
     new Date(),
   ]);
   const [availableTimeRange, setAvailableTimeRange] = useState<{
@@ -109,18 +109,26 @@ export default function PanelPage() {
   const fetchUsageData = async (range: [Date, Date]) => {
     setLoading(true);
     try {
-      const startTime = dayjs(range[0]).startOf("day").toISOString();
-      const endTime = dayjs(range[1]).endOf("day").toISOString();
+      const startTime = dayjs(range[0])
+        .startOf("day")
+        .format("YYYY-MM-DDTHH:mm:ssZ");
+      const endTime = dayjs(range[1])
+        .endOf("day")
+        .format("YYYY-MM-DDTHH:mm:ssZ");
 
       const url = `/api/v1/panel/usage?startTime=${startTime}&endTime=${endTime}`;
-      const response = await fetch(url);
+      const token = localStorage.getItem("access_token");
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (!response.ok) throw new Error("Failed to fetch data");
 
       const data = await response.json();
       setUsageData(data);
 
-      // 如果是全部时间范围,更新可用时间范围
       if (timeRangeType === "all") {
         const minTime = new Date(data.timeRange.minTime);
         const maxTime = new Date(data.timeRange.maxTime);
@@ -143,7 +151,6 @@ export default function PanelPage() {
         params.pagination.pageSize?.toString() || "10"
       );
 
-      // 添加排序和过滤参数
       if (params.sortField) {
         searchParams.append("sortField", params.sortField);
         searchParams.append("sortOrder", params.sortOrder || "ascend");
@@ -155,18 +162,23 @@ export default function PanelPage() {
         searchParams.append("models", params.filters.model_name.join(","));
       }
 
-      // 添加日期范围
       searchParams.append(
         "startDate",
-        dayjs(range[0]).startOf("day").format("YYYY-MM-DD")
+        dayjs(range[0]).startOf("day").format("YYYY-MM-DDTHH:mm:ssZ")
       );
       searchParams.append(
         "endDate",
-        dayjs(range[1]).endOf("day").format("YYYY-MM-DD")
+        dayjs(range[1]).endOf("day").format("YYYY-MM-DDTHH:mm:ssZ")
       );
 
+      const token = localStorage.getItem("access_token");
       const response = await fetch(
-        `/api/v1/panel/records?${searchParams.toString()}`
+        `/api/v1/panel/records?${searchParams.toString()}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       const data = await response.json();
 
@@ -187,15 +199,18 @@ export default function PanelPage() {
 
   useEffect(() => {
     const loadInitialData = async () => {
-      // 获取全部时间范围的数据
-      const response = await fetch("/api/v1/panel/usage");
+      const token = localStorage.getItem("access_token");
+      const response = await fetch("/api/v1/panel/usage", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const data = await response.json();
 
       const minTime = dayjs(data.timeRange.minTime).startOf("day").toDate();
       const maxTime = dayjs(data.timeRange.maxTime).endOf("day").toDate();
       setAvailableTimeRange({ minTime, maxTime });
 
-      // 设置为全部时间范围
       const allTimeRange: [Date, Date] = [minTime, maxTime];
       setDateRange(allTimeRange);
       setTimeRangeType("all");
@@ -237,11 +252,9 @@ export default function PanelPage() {
   };
 
   const renderDateRangeLabel = () => {
-    // 如果是同一天，只显示一个日期
     if (dayjs(dateRange[0]).isSame(dateRange[1], "day")) {
       return dayjs(dateRange[0]).format("YYYY-MM-DD");
     }
-    // 否则显示日期范围
     return `${dayjs(dateRange[0]).format("YYYY-MM-DD")} ~ ${dayjs(
       dateRange[1]
     ).format("YYYY-MM-DD")}`;

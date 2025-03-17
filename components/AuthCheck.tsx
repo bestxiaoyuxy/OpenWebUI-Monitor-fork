@@ -10,8 +10,19 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
+    const initDb = async () => {
+      try {
+        await fetch("/api/init");
+      } catch (error) {
+        console.error("初始化数据库失败:", error);
+      }
+    };
+
+    initDb();
+  }, []);
+
+  useEffect(() => {
     const checkAuth = async () => {
-      // 如果已经在token页面，不需要检查
       if (pathname === "/token") {
         setIsLoading(false);
         setIsAuthorized(true);
@@ -25,7 +36,7 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
       }
 
       try {
-        const res = await fetch("/api/config", {
+        const res = await fetch("/api/v1/config", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -49,7 +60,6 @@ export default function AuthCheck({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, [router, pathname]);
 
-  // 显示加载状态或空白页面
   if (isLoading || !isAuthorized) {
     return null;
   }

@@ -1,13 +1,15 @@
-import { pool } from "@/lib/db";
+import { query } from "@/lib/db/client";
 import { NextResponse } from "next/server";
-import { PoolClient } from "pg";
+import { verifyApiToken } from "@/lib/auth";
 
-export async function GET() {
-  let client: PoolClient | null = null;
+export async function GET(req: Request) {
+  const authError = verifyApiToken(req);
+  if (authError) {
+    return authError;
+  }
+
   try {
-    client = await pool.connect();
-
-    const records = await client.query(`
+    const records = await query(`
       SELECT 
         nickname,
         use_time,
@@ -20,7 +22,6 @@ export async function GET() {
       ORDER BY use_time DESC
     `);
 
-    // 生成 CSV 内容
     const csvHeaders = [
       "User",
       "Time",
@@ -45,7 +46,6 @@ export async function GET() {
       ...rows.map((row) => row.join(",")),
     ].join("\n");
 
-    // 设置响应头
     const responseHeaders = new Headers();
     responseHeaders.set("Content-Type", "text/csv; charset=utf-8");
     responseHeaders.set(
@@ -62,9 +62,5 @@ export async function GET() {
       { error: "Fail to export records" },
       { status: 500 }
     );
-  } finally {
-    if (client) {
-      client.release();
-    }
   }
 }

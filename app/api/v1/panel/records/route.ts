@@ -1,9 +1,13 @@
-import { pool } from "@/lib/db";
+import { query } from "@/lib/db/client";
 import { NextResponse } from "next/server";
-import { PoolClient } from "pg";
+import { verifyApiToken } from "@/lib/auth";
 
 export async function GET(req: Request) {
-  let client: PoolClient | null = null;
+  const authError = verifyApiToken(req);
+  if (authError) {
+    return authError;
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const page = parseInt(searchParams.get("page") || "1");
@@ -12,10 +16,9 @@ export async function GET(req: Request) {
     const sortOrder = searchParams.get("sortOrder");
     const users = searchParams.get("users")?.split(",") || [];
     const models = searchParams.get("models")?.split(",") || [];
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
 
-    client = await pool.connect();
-
-    // 构建查询条件
     const conditions = [];
     const params = [];
     let paramIndex = 1;
@@ -32,23 +35,29 @@ export async function GET(req: Request) {
       paramIndex++;
     }
 
+    if (startDate && endDate) {
+      conditions.push(
+        `use_time >= $${paramIndex} AND use_time <= $${paramIndex + 1}`
+      );
+      params.push(startDate);
+      params.push(endDate);
+      paramIndex += 2;
+    }
+
     const whereClause =
       conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
-    // 构建排序
     const orderClause = sortField
       ? `ORDER BY ${sortField} ${sortOrder === "descend" ? "DESC" : "ASC"}`
       : "ORDER BY use_time DESC";
 
-    // 获取总记录数
     const countQuery = `
       SELECT COUNT(*) 
       FROM user_usage_records 
       ${whereClause}
     `;
-    const countResult = await client.query(countQuery, params);
+    const countResult = await query(countQuery, params);
 
-    // 获取分页数据
     const offset = (page - 1) * pageSize;
     const dataQuery = `
       SELECT 
@@ -67,7 +76,7 @@ export async function GET(req: Request) {
     `;
 
     const dataParams = [...params, pageSize, offset];
-    const records = await client.query(dataQuery, dataParams);
+    const records = await query(dataQuery, dataParams);
 
     const total = parseInt(countResult.rows[0].count);
 
@@ -81,9 +90,5 @@ export async function GET(req: Request) {
       { error: "Fail to fetch usage records" },
       { status: 500 }
     );
-  } finally {
-    if (client) {
-      client.release();
-    }
   }
 }

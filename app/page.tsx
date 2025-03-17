@@ -31,7 +31,6 @@ export default function HomePage() {
         const currentVer = APP_VERSION.replace(/^v/, "");
         const newVer = latestVer.replace(/^v/, "");
 
-        // 检查是否有更新且用户未禁用该版本的提示
         const ignoredVersion = localStorage.getItem("ignoredVersion");
         if (currentVer !== newVer && ignoredVersion !== latestVer) {
           setLatestVersion(latestVer);
@@ -61,7 +60,6 @@ export default function HomePage() {
 
   return (
     <main className="relative min-h-screen w-full overflow-hidden bg-gradient-to-br from-rose-50 via-slate-50 to-teal-50 pt-16">
-      {/* 新增动态网格背景 */}
       <AnimatedGridPattern
         numSquares={30}
         maxOpacity={0.03}
@@ -73,18 +71,15 @@ export default function HomePage() {
         )}
       />
 
-      {/* 装饰性背景模糊圆 */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-gradient-to-br from-rose-100/20 via-slate-100/20 to-teal-100/20 rounded-full blur-3xl opacity-40" />
       <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-pink-100/10 to-indigo-100/10 rounded-full blur-3xl opacity-30" />
       <div className="absolute bottom-1/4 right-1/4 w-[700px] h-[700px] bg-gradient-to-br from-teal-100/10 to-slate-100/10 rounded-full blur-3xl opacity-30" />
 
-      {/* 修改主要内容容器，使用flex布局固定GitHub在底部 */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         className="min-h-[calc(100vh-4rem)] flex flex-col relative z-10"
       >
-        {/* 标题区域保持不变 */}
         <motion.div className="flex-1 flex flex-col items-center justify-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -111,13 +106,10 @@ export default function HomePage() {
             </div>
           </motion.div>
 
-          {/* 重新设计的导航区域 */}
           <div className="w-full max-w-2xl px-4 sm:px-6">
             <div className="relative">
-              {/* 装饰性背景 */}
               <div className="absolute inset-0 bg-gradient-to-r from-rose-100/20 via-slate-100/20 to-teal-100/20 blur-3xl -z-10" />
 
-              {/* 新的垂直导航设计 */}
               <div className="space-y-4">
                 {[
                   {
@@ -164,15 +156,12 @@ export default function HomePage() {
                         shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] 
                         hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.12)]"
                     >
-                      {/* 移除边框设计，只保留渐变背景 */}
                       <div
                         className={`absolute inset-0 bg-gradient-to-r ${item.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`}
                       />
 
-                      {/* 内容区域 */}
                       <div className="relative p-6">
                         <div className="flex items-center gap-4">
-                          {/* 图标容器 - 使用投影替代边框 */}
                           <div
                             className={cn(
                               "p-3 rounded-xl transition-all duration-500",
@@ -185,7 +174,6 @@ export default function HomePage() {
                             {item.icon}
                           </div>
 
-                          {/* 文字内容 */}
                           <div className="flex-1 min-w-0">
                             <h3 className="text-lg font-medium text-slate-800 group-hover:text-white transition-colors mb-1">
                               {item.title}
@@ -195,7 +183,6 @@ export default function HomePage() {
                             </p>
                           </div>
 
-                          {/* 箭头 */}
                           <div
                             className={cn(
                               "transform transition-all duration-300",
@@ -227,7 +214,6 @@ export default function HomePage() {
           </div>
         </motion.div>
 
-        {/* GitHub 图标固定在底部 */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -245,7 +231,6 @@ export default function HomePage() {
         </motion.div>
       </motion.div>
 
-      {/* 更新提示框样式修改 */}
       {isUpdateVisible && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}

@@ -225,13 +225,12 @@ export default function UserRankingChart({
   const onChartReady = (instance: ECharts) => {
     chartRef.current = instance;
     const zoomSize = 6;
-    let isZoomed = false; // 增加一个状态变量
+    let isZoomed = false;
 
     instance.on("click", (params) => {
       const dataLength = users.length;
 
       if (!isZoomed) {
-        // 第一次点击，放大区域
         instance.dispatchAction({
           type: "dataZoom",
           startValue:
@@ -242,7 +241,6 @@ export default function UserRankingChart({
         });
         isZoomed = true;
       } else {
-        // 第二次点击，还原缩放
         instance.dispatchAction({
           type: "dataZoom",
           start: 0,

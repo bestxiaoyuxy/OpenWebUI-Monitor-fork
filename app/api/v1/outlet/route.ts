@@ -34,7 +34,6 @@ async function getModelPrice(modelId: string): Promise<ModelPrice | null> {
     return result.rows[0];
   }
 
-  // If no price is found in the database, use the default price
   const defaultInputPrice = parseFloat(
     process.env.DEFAULT_MODEL_INPUT_PRICE || "60"
   );
@@ -42,7 +41,6 @@ async function getModelPrice(modelId: string): Promise<ModelPrice | null> {
     process.env.DEFAULT_MODEL_OUTPUT_PRICE || "60"
   );
 
-  // Verify that the default price is a valid non-negative number
   if (
     isNaN(defaultInputPrice) ||
     defaultInputPrice < 0 ||
@@ -57,7 +55,7 @@ async function getModelPrice(modelId: string): Promise<ModelPrice | null> {
     name: modelId,
     input_price: defaultInputPrice,
     output_price: defaultOutputPrice,
-    per_msg_price: -1, // Default to token-based pricing
+    per_msg_price: -1,
   };
 }
 
@@ -66,7 +64,6 @@ export async function POST(req: Request) {
   let pgClient: DbClient | null = null;
 
   try {
-    // Get a dedicated transaction client
     if (isVercel) {
       pgClient = client;
     } else {
@@ -74,21 +71,18 @@ export async function POST(req: Request) {
     }
 
     const data = await req.json();
-    console.log("请求数据:", JSON.stringify(data, null, 2));
+    console.log("Request data:", JSON.stringify(data, null, 2));
     const modelId = data.body.model;
     const userId = data.user.id;
     const userName = data.user.name || "Unknown User";
 
-    // Start a transaction
     await query("BEGIN");
 
-    // Get model price
     const modelPrice = await getModelPrice(modelId);
     if (!modelPrice) {
       throw new Error(`Fail to fetch price info of model ${modelId}`);
     }
 
-    // Calculate tokens
     const lastMessage = data.body.messages[data.body.messages.length - 1];
 
     let inputTokens: number;
@@ -109,32 +103,25 @@ export async function POST(req: Request) {
       inputTokens = totalTokens - outputTokens;
     }
 
-    // Calculate total cost
     let totalCost: number;
     if (outputTokens === 0) {
-      // If output tokens are 0, no charge
       totalCost = 0;
       console.log("No charge for zero output tokens");
     } else if (modelPrice.per_msg_price >= 0) {
-      // If fixed pricing is set, use it directly
       totalCost = Number(modelPrice.per_msg_price);
       console.log(
         `Using fixed pricing: ${totalCost} (${modelPrice.per_msg_price} per message)`
       );
     } else {
-      // Otherwise, calculate price by token quantity
       const inputCost = (inputTokens / 1_000_000) * modelPrice.input_price;
       const outputCost = (outputTokens / 1_000_000) * modelPrice.output_price;
       totalCost = inputCost + outputCost;
     }
 
-    // Get the pre-deducted cost when getting inlet
     const inletCost = getModelInletCost(modelId);
 
-    // The actual cost to be deducted = total cost - pre-deducted cost
     const actualCost = totalCost - inletCost;
 
-    // Get and update user balance
     const userResult = await query(
       `UPDATE users 
        SET balance = LEAST(
@@ -156,7 +143,6 @@ export async function POST(req: Request) {
       throw new Error("Balance exceeds maximum allowed value");
     }
 
-    // Record usage
     await query(
       `INSERT INTO user_usage_records (
         user_id, nickname, model_name, 
@@ -208,7 +194,6 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   } finally {
-    // Only release connection in non-Vercel environment
     if (!isVercel && pgClient && "release" in pgClient) {
       pgClient.release();
     }

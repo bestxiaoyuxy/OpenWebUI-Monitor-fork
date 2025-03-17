@@ -177,7 +177,6 @@ export default function RecordsPage() {
         },
       });
 
-      // 设置筛选选项
       setUsers(data.users as string[]);
       setModels(data.models as string[]);
     } catch (error) {
@@ -230,7 +229,6 @@ export default function RecordsPage() {
     }
   };
 
-  // 修改表格样式
   const tableClassName = `
     [&_.ant-table]:!border-b-0 
     [&_.ant-table-container]:!rounded-xl 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import dayjs from "dayjs";
+import dayjs from "@/lib/dayjs";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";

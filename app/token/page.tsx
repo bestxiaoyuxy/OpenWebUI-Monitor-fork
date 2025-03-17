@@ -34,7 +34,7 @@ export default function TokenPage() {
     setLoading(true);
     try {
       localStorage.setItem("access_token", token);
-      const res = await fetch("/api/config", {
+      const res = await fetch("/api/v1/config", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -76,7 +76,6 @@ export default function TokenPage() {
         )}
       />
 
-      {/* 装饰性背景模糊圆 */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-gradient-to-br from-rose-100/20 via-slate-100/20 to-teal-100/20 rounded-full blur-3xl opacity-40" />
       <div className="absolute top-1/4 left-1/4 w-[500px] h-[500px] bg-gradient-to-br from-pink-100/10 to-indigo-100/10 rounded-full blur-3xl opacity-30" />
       <div className="absolute bottom-1/4 right-1/4 w-[700px] h-[700px] bg-gradient-to-br from-teal-100/10 to-slate-100/10 rounded-full blur-3xl opacity-30" />
@@ -112,7 +111,6 @@ export default function TokenPage() {
           className="backdrop-blur-[20px] bg-white/[0.08] p-10 rounded-[2.5rem] border border-white/20 shadow-2xl relative overflow-hidden 
             hover:shadow-[0_8px_60px_rgba(120,119,198,0.15)] transition-shadow duration-300 group"
         >
-          {/* 新增流光边框效果 */}
           <div
             className="absolute inset-0 rounded-[2.5rem] p-[2px] 
             bg-gradient-to-br from-white/30 via-transparent to-transparent 
@@ -120,7 +118,6 @@ export default function TokenPage() {
             [mask-composite:xor] opacity-30 group-hover:opacity-50 transition-opacity"
           ></div>
 
-          {/* 新增动态粒子背景 */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-100/5 via-transparent to-transparent opacity-20" />
 
           <motion.form

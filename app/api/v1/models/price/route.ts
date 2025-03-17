@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { updateModelPrice } from "@/lib/db";
+import { updateModelPrice } from "@/lib/db/client";
+import { verifyApiToken } from "@/lib/auth";
 
 interface PriceUpdate {
   id: string;
@@ -9,11 +10,15 @@ interface PriceUpdate {
 }
 
 export async function POST(request: NextRequest) {
+  const authError = verifyApiToken(request);
+  if (authError) {
+    return authError;
+  }
+
   try {
     const data = await request.json();
     console.log("Raw data received:", data);
 
-    // 从对象中提取模型数组
     const updates = data.updates || data;
     if (!Array.isArray(updates)) {
       console.error("Invalid data format - expected array:", updates);
@@ -23,7 +28,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 验证并转换数据格式
     const validUpdates = updates
       .map((update: any) => ({
         id: update.id,
@@ -52,7 +56,6 @@ export async function POST(request: NextRequest) {
       `Successfully verified price updating requests of ${validUpdates.length} models`
     );
 
-    // 执行批量更新并收集结果
     const results = await Promise.all(
       validUpdates.map(async (update: PriceUpdate) => {
         try {

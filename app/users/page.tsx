@@ -275,7 +275,6 @@ const BlockConfirmModal = ({
   );
 };
 
-// 修改 LoadingState 组件,添加 t 参数
 const LoadingState = ({ t }: { t: TFunction }) => (
   <div className="flex flex-col items-center justify-center py-12 px-4">
     <div className="h-12 w-12 rounded-full border-4 border-primary/10 border-t-primary animate-spin mb-4" />
@@ -310,7 +309,7 @@ export default function UsersPage() {
   const fetchUsers = async (page: number, isBlacklist: boolean = false) => {
     setLoading(true);
     try {
-      let url = `/api/users?page=${page}&deleted=${isBlacklist}`;
+      let url = `/api/v1/users?page=${page}&deleted=${isBlacklist}`;
       if (sortInfo.field && sortInfo.order) {
         url += `&sortField=${sortInfo.field}&sortOrder=${sortInfo.order}`;
       }
@@ -318,7 +317,12 @@ export default function UsersPage() {
         url += `&search=${encodeURIComponent(searchText)}`;
       }
 
-      const res = await fetch(url);
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
@@ -339,7 +343,12 @@ export default function UsersPage() {
 
   const fetchBlacklistTotal = async () => {
     try {
-      const res = await fetch(`/api/users?page=1&deleted=true&pageSize=1`);
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`/api/v1/users?page=1&deleted=true&pageSize=1`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setBlacklistTotal(data.total);
@@ -361,29 +370,41 @@ export default function UsersPage() {
 
   const handleUpdateBalance = async (userId: string, newBalance: number) => {
     try {
-      const res = await fetch(`/api/users/${userId}/balance`, {
+      console.log(`Updating balance for user ${userId} to ${newBalance}`);
+
+      const token = localStorage.getItem("access_token");
+      if (!token) {
+        throw new Error(t("auth.unauthorized"));
+      }
+
+      const res = await fetch(`/api/v1/users/${userId}/balance`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ balance: newBalance }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      console.log("Update balance response:", data);
 
-      // 立即更新本地数据
+      if (!res.ok) {
+        throw new Error(data.error || t("users.message.updateBalance.error"));
+      }
+
       setUsers(
         users.map((user) =>
           user.id === userId ? { ...user, balance: newBalance } : user
         )
       );
 
-      // 然后再显示成功提示并清除编辑状态
       toast.success(t("users.message.updateBalance.success"));
       setEditingKey("");
 
-      // 最后再重新获取完整列表
       fetchUsers(currentPage, false);
     } catch (err) {
+      console.error("Failed to update balance:", err);
       toast.error(
         err instanceof Error
           ? err.message
@@ -396,10 +417,12 @@ export default function UsersPage() {
     if (!userToDelete) return;
 
     try {
-      const res = await fetch(`/api/users/${userToDelete.id}`, {
+      const token = localStorage.getItem("access_token");
+      const res = await fetch(`/api/v1/users/${userToDelete.id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           deleted: !userToDelete.deleted,
@@ -782,7 +805,6 @@ export default function UsersPage() {
     );
   };
 
-  // 添加空状态组件
   const EmptyState = ({ searchText }: { searchText: string }) => (
     <div className="flex flex-col items-center justify-center py-12 px-4">
       <div className="h-12 w-12 rounded-full bg-muted/40 flex items-center justify-center mb-4">

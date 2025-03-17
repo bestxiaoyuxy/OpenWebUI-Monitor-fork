@@ -1,24 +1,18 @@
-import { pool } from "@/lib/db";
+import { query } from "@/lib/db/client";
 import { NextResponse } from "next/server";
-import { PoolClient } from "pg";
+import { verifyApiToken } from "@/lib/auth";
 
-export async function GET() {
-  let client: PoolClient | null = null;
+export async function GET(req: Request) {
+  const authError = verifyApiToken(req);
+  if (authError) {
+    return authError;
+  }
 
   try {
-    // 获取数据库连接
-    client = await pool.connect();
+    const users = await query("SELECT * FROM users ORDER BY id");
+    const modelPrices = await query("SELECT * FROM model_prices ORDER BY id");
+    const records = await query("SELECT * FROM user_usage_records ORDER BY id");
 
-    // 获取所有表的数据
-    const users = await client.query("SELECT * FROM users ORDER BY id");
-    const modelPrices = await client.query(
-      "SELECT * FROM model_prices ORDER BY id"
-    );
-    const records = await client.query(
-      "SELECT * FROM user_usage_records ORDER BY id"
-    );
-
-    // 构建导出数据结构
     const exportData = {
       version: "1.0",
       timestamp: new Date().toISOString(),
@@ -29,7 +23,6 @@ export async function GET() {
       },
     };
 
-    // 设置响应头
     const headers = new Headers();
     headers.set("Content-Type", "application/json");
     headers.set(
@@ -48,9 +41,5 @@ export async function GET() {
       { error: "Fail to export database" },
       { status: 500 }
     );
-  } finally {
-    if (client) {
-      client.release();
-    }
   }
 }

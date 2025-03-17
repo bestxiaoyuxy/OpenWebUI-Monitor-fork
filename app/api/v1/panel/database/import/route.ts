@@ -1,34 +1,30 @@
-import { pool } from "@/lib/db";
+import { query } from "@/lib/db/client";
 import { NextResponse } from "next/server";
-import { PoolClient } from "pg";
+import { verifyApiToken } from "@/lib/auth";
 
 export async function POST(req: Request) {
-  let client: PoolClient | null = null;
+  const authError = verifyApiToken(req);
+  if (authError) {
+    return authError;
+  }
 
   try {
     const data = await req.json();
 
-    // 验证数据格式
     if (!data.version || !data.data) {
       throw new Error("Invalid import data format");
     }
 
-    // 获取数据库连接
-    client = await pool.connect();
-
-    // 开启事务
-    await client.query("BEGIN");
-
     try {
-      // 清空现有数据
-      await client.query("TRUNCATE TABLE user_usage_records CASCADE");
-      await client.query("TRUNCATE TABLE model_prices CASCADE");
-      await client.query("TRUNCATE TABLE users CASCADE");
+      await query("BEGIN");
 
-      // 导入用户数据
+      await query("TRUNCATE TABLE user_usage_records CASCADE");
+      await query("TRUNCATE TABLE model_prices CASCADE");
+      await query("TRUNCATE TABLE users CASCADE");
+
       if (data.data.users?.length) {
         for (const user of data.data.users) {
-          await client.query(
+          await query(
             `INSERT INTO users (id, email, name, role, balance)
              VALUES ($1, $2, $3, $4, $5)`,
             [user.id, user.email, user.name, user.role, user.balance]
@@ -36,10 +32,9 @@ export async function POST(req: Request) {
         }
       }
 
-      // 导入模型价格
       if (data.data.model_prices?.length) {
         for (const price of data.data.model_prices) {
-          await client.query(
+          await query(
             `INSERT INTO model_prices (id, name, input_price, output_price)
              VALUES ($1, $2, $3, $4)`,
             [price.id, price.name, price.input_price, price.output_price]
@@ -47,10 +42,9 @@ export async function POST(req: Request) {
         }
       }
 
-      // 导入使用记录
       if (data.data.user_usage_records?.length) {
         for (const record of data.data.user_usage_records) {
-          await client.query(
+          await query(
             `INSERT INTO user_usage_records (
               user_id, nickname, use_time, model_name, 
               input_tokens, output_tokens, cost, balance_after
@@ -69,14 +63,14 @@ export async function POST(req: Request) {
         }
       }
 
-      await client.query("COMMIT");
+      await query("COMMIT");
 
       return NextResponse.json({
         success: true,
         message: "Data import successful",
       });
     } catch (error) {
-      await client.query("ROLLBACK");
+      await query("ROLLBACK");
       throw error;
     }
   } catch (error) {
@@ -89,9 +83,5 @@ export async function POST(req: Request) {
       },
       { status: 500 }
     );
-  } finally {
-    if (client) {
-      client.release();
-    }
   }
 }

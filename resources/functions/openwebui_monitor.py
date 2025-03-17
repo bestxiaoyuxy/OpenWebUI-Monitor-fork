@@ -2,7 +2,7 @@
 title: Usage Monitor
 author: VariantConst & OVINC CN
 git_url: https://github.com/VariantConst/OpenWebUI-Monitor.git
-version: 0.3.5
+version: 0.3.6
 requirements: httpx
 license: MIT
 """
@@ -12,6 +12,8 @@ from typing import Dict, Optional
 
 from httpx import AsyncClient
 from pydantic import BaseModel, Field
+import json
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -31,9 +33,11 @@ class Filter:
         self.type = "filter"
         self.valves = self.Valves()
         self.outage_map: Dict[str, bool] = {}
+    
+    async def request(self, client: AsyncClient, url: str, headers: dict, json_data: dict):
+        json_data = json.loads(json.dumps(json_data, default=lambda o: o.dict() if hasattr(o, "dict") else str(o)))
 
-    async def request(self, client: AsyncClient, url: str, headers: dict, json: dict):
-        response = await client.post(url=url, headers=headers, json=json)
+        response = await client.post(url=url, headers=headers, json=json_data)
         response.raise_for_status()
         response_data = response.json()
         if not response_data.get("success"):
@@ -53,7 +57,7 @@ class Filter:
                 client=client,
                 url=f"{self.valves.api_endpoint}/api/v1/inlet",
                 headers={"Authorization": f"Bearer {self.valves.api_key}"},
-                json={"user": __user__, "body": body},
+                json_data={"user": __user__, "body": body},
             )
             self.outage_map[user_id] = response_data.get("balance", 0) <= 0
             if self.outage_map[user_id]:
@@ -92,7 +96,7 @@ class Filter:
                 client=client,
                 url=f"{self.valves.api_endpoint}/api/v1/outlet",
                 headers={"Authorization": f"Bearer {self.valves.api_key}"},
-                json={"user": __user__, "body": body},
+                json_data={"user": __user__, "body": body},
             )
 
             # pylint: disable=C0209

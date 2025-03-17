@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { query } from "@/lib/db/client";
 import { ensureUserTableExists } from "@/lib/db/users";
+import { verifyApiToken } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
+  const authError = verifyApiToken(req);
+  if (authError) {
+    return authError;
+  }
+
   try {
-    // 确保表结构正确
     await ensureUserTableExists();
 
     const { searchParams } = new URL(req.url);
@@ -15,7 +20,6 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get("search");
     const deleted = searchParams.get("deleted") === "true";
 
-    // 构建查询条件
     const conditions = [`deleted = ${deleted}`];
     const params = [];
     let paramIndex = 1;
@@ -30,14 +34,12 @@ export async function GET(req: NextRequest) {
 
     const whereClause = `WHERE ${conditions.join(" AND ")}`;
 
-    // 获取总记录数
     const countResult = await query(
       `SELECT COUNT(*) FROM users ${whereClause}`,
       params
     );
     const total = parseInt(countResult.rows[0].count);
 
-    // 获取分页数据
     const result = await query(
       `SELECT id, email, name, role, balance, deleted, created_at 
        FROM users 

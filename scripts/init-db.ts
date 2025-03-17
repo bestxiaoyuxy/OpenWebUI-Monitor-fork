@@ -1,4 +1,4 @@
-import { ensureTablesExist } from "../lib/db";
+import { ensureTablesExist } from "../lib/db/client";
 
 async function init() {
   try {

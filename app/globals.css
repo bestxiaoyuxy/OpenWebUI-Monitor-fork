@@ -80,7 +80,6 @@ body {
   display: none;
 }
 
-/* 更新模态框样式 */
 .update-modal .ant-modal-content {
   padding: 24px;
   border-radius: 16px;
@@ -222,7 +221,6 @@ body {
   background-size: 24px 24px;
 }
 
-/* 添加以下样式 */
 @media (max-width: 640px) {
   .toaster-group {
     --viewport-padding: 16px;
@@ -240,7 +238,6 @@ body {
   }
 }
 
-/* 自定义日期选择器样式 */
 .custom-date-picker {
   border-radius: 0.5rem;
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Table, TablePaginationConfig, Select } from "antd";
 import type { FilterValue } from "antd/es/table/interface";
 import type { SorterResult } from "antd/es/table/interface";
-import dayjs from "dayjs";
+import dayjs from "@/lib/dayjs";
 import { useTranslation } from "react-i18next";
 interface UsageRecord {
   id: number;
@@ -200,7 +200,6 @@ export default function UsageRecordsTable({
         />
       </div>
 
-      {/* 桌面设备表格 */}
       <div className="hidden sm:block">
         <Table
           columns={columns}
@@ -235,7 +234,6 @@ export default function UsageRecordsTable({
         />
       </div>
 
-      {/* 移动设备卡片列表 */}
       <div className="sm:hidden space-y-4">
         {loading ? (
           <div className="flex justify-center py-8">

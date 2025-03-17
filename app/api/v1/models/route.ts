@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { ensureTablesExist, getOrCreateModelPrices } from "@/lib/db";
+import { ensureTablesExist, getOrCreateModelPrices } from "@/lib/db/client";
+import { verifyApiToken } from "@/lib/auth";
 
 interface ModelInfo {
   id: string;
@@ -21,9 +22,13 @@ interface ModelResponse {
   }[];
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const authError = verifyApiToken(req);
+  if (authError) {
+    return authError;
+  }
+
   try {
-    // Ensure database is initialized
     await ensureTablesExist();
 
     const domain = process.env.OPENWEBUI_DOMAIN;
@@ -31,7 +36,6 @@ export async function GET() {
       throw new Error("OPENWEBUI_DOMAIN environment variable is not set.");
     }
 
-    // Normalize API URL
     const apiUrl = domain.replace(/\/+$/, "") + "/api/models";
 
     const response = await fetch(apiUrl, {
@@ -47,9 +51,7 @@ export async function GET() {
       throw new Error(`Failed to fetch models: ${response.status}`);
     }
 
-    // Get response text for debugging
     const responseText = await response.text();
-    // console.log("API response:", responseText);
 
     let data: ModelResponse;
     try {
@@ -66,13 +68,10 @@ export async function GET() {
       throw new Error("Unexpected API response structure");
     }
 
-    // Get price information for all models
     const modelsWithPrices = await getOrCreateModelPrices(
       data.data.map((item) => {
-        // 处理形如 gemini_search.gemini-2.0-flash 的派生模型ID
         let baseModelId = item.info?.base_model_id;
 
-        // 如果没有明确的base_model_id，尝试从ID中提取
         if (!baseModelId && item.id) {
           const idParts = String(item.id).split(".");
           if (idParts.length > 1) {
@@ -89,10 +88,8 @@ export async function GET() {
     );
 
     const validModels = data.data.map((item, index) => {
-      // 处理形如 gemini_search.gemini-2.0-flash 的派生模型ID
       let baseModelId = item.info?.base_model_id || "";
 
-      // 如果没有明确的base_model_id，尝试从ID中提取
       if (!baseModelId && item.id) {
         const idParts = String(item.id).split(".");
         if (idParts.length > 1) {
@@ -126,8 +123,12 @@ export async function GET() {
   }
 }
 
-// Add inlet endpoint
 export async function POST(req: Request) {
+  const authError = verifyApiToken(req);
+  if (authError) {
+    return authError;
+  }
+
   const data = await req.json();
 
   return new Response("Inlet placeholder response", {
@@ -135,10 +136,13 @@ export async function POST(req: Request) {
   });
 }
 
-// Add outlet endpoint
 export async function PUT(req: Request) {
+  const authError = verifyApiToken(req);
+  if (authError) {
+    return authError;
+  }
+
   const data = await req.json();
-  // console.log("Outlet received:", JSON.stringify(data, null, 2));
 
   return new Response("Outlet placeholder response", {
     headers: { "Content-Type": "application/json" },

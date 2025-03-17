@@ -40,15 +40,12 @@ export default function Header() {
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [isSettingsExpanded, setIsSettingsExpanded] = useState(false);
 
-  // 将函数声明移到前面
   const handleLanguageChange = async (newLang: string) => {
     await i18n.changeLanguage(newLang);
     localStorage.setItem("language", newLang);
   };
 
-  // 如果是token页面，只显示语言切换按钮
   const isTokenPage = pathname === "/token";
 
   if (isTokenPage) {
@@ -89,15 +86,13 @@ export default function Header() {
       return;
     }
 
-    // 验证token的有效性
-    fetch("/api/config", {
+    fetch("/api/v1/config", {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
       .then((res) => {
         if (!res.ok) {
-          // 如果token无效，清除token并重定向
           localStorage.removeItem("access_token");
           router.push("/token");
           return;
@@ -111,7 +106,6 @@ export default function Header() {
       })
       .catch(() => {
         setApiKey(t("common.error"));
-        // 发生错误时也清除token并重定向
         localStorage.removeItem("access_token");
         router.push("/token");
       });
@@ -292,11 +286,10 @@ export default function Header() {
   ];
 
   const menuItems = [
-    // 在小屏幕上将导航项添加到菜单中，但需要特殊处理
     ...(!isTokenPage
       ? navigationItems.map((item) => ({
           ...item,
-          onClick: () => router.push(item.path), // 为导航项添加 onClick 处理
+          onClick: () => router.push(item.path),
         }))
       : []),
     {
@@ -325,7 +318,6 @@ export default function Header() {
     },
   ];
 
-  // 在navigationItems数组后添加
   const actionItems = [
     {
       icon: <Globe className="w-5 h-5" />,
@@ -372,9 +364,7 @@ export default function Header() {
               </Link>
             </motion.div>
 
-            {/* 右侧内容 */}
             <div className="flex items-center gap-4">
-              {/* 导航项 - 仅在大屏幕显示 */}
               {!isTokenPage && (
                 <div className="hidden md:flex items-center gap-3">
                   {navigationItems.map((item) => (
@@ -401,7 +391,6 @@ export default function Header() {
                 </div>
               )}
 
-              {/* 语言切换和菜单按钮 */}
               <div className="flex items-center gap-3">
                 {actionItems.map((item, index) => (
                   <button
@@ -433,7 +422,6 @@ export default function Header() {
       <AnimatePresence>
         {isMenuOpen && (
           <>
-            {/* 背景遮罩 */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -443,7 +431,6 @@ export default function Header() {
               onClick={() => setIsMenuOpen(false)}
             />
 
-            {/* 菜单面板 - 响应式布局 */}
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -451,9 +438,7 @@ export default function Header() {
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
               className="fixed top-0 right-0 h-full bg-white/95 backdrop-blur-xl z-50 w-full max-w-[480px] md:top-[calc(4rem+0.5rem)] md:h-auto md:mr-6 md:rounded-2xl md:border md:shadow-xl md:max-h-[calc(100vh-5rem)] overflow-hidden shadow-lg border-l border-gray-100/50"
             >
-              {/* 内容容器 */}
               <div className="relative h-full flex flex-col">
-                {/* 顶部栏 */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-100/50">
                   <h2 className="text-lg font-medium bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
                     {t("header.menu.settings")}
@@ -466,10 +451,8 @@ export default function Header() {
                   </button>
                 </div>
 
-                {/* 菜单项列表 */}
                 <div className="flex-1 overflow-y-auto p-2">
                   <div className="space-y-1">
-                    {/* 导航项 - 仅在移动端显示 */}
                     <div className="md:hidden space-y-1">
                       {navigationItems.map((item, index) => (
                         <motion.button
@@ -497,7 +480,6 @@ export default function Header() {
                       ))}
                     </div>
 
-                    {/* 设置选项 - 直接显示所有选项 */}
                     <div className="border-t border-gray-100/50 pt-2 md:border-t-0 md:pt-0">
                       {settingsItems.map((item, index) => (
                         <motion.button

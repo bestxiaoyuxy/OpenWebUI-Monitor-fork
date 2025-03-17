@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { pool } from "@/lib/db";
+import { pool } from "@/lib/db/client";
+import { verifyApiToken } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
+  const authError = verifyApiToken(request);
+  if (authError) {
+    return authError;
+  }
+
   try {
     const client = await pool.connect();
     try {
-      // 1. 获取所有有效的派生模型（base_model_id 存在且在数据库中有对应记录）
       const derivedModelsResult = await client.query(`
         SELECT d.id, d.name, d.base_model_id 
         FROM model_prices d
@@ -24,10 +29,8 @@ export async function POST(request: NextRequest) {
       const derivedModels = derivedModelsResult.rows;
       const syncResults = [];
 
-      // 2. 为每个派生模型同步价格
       for (const derivedModel of derivedModels) {
         try {
-          // 获取上游模型价格
           const baseModelResult = await client.query(
             `SELECT input_price, output_price, per_msg_price FROM model_prices WHERE id = $1`,
             [derivedModel.base_model_id]
@@ -45,7 +48,6 @@ export async function POST(request: NextRequest) {
 
           const baseModel = baseModelResult.rows[0];
 
-          // 更新派生模型价格
           const updateResult = await client.query(
             `UPDATE model_prices 
              SET 

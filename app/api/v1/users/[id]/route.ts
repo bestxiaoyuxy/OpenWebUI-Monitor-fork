@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { deleteUser } from "@/lib/db/users";
 import { query } from "@/lib/db/client";
+import { verifyApiToken } from "@/lib/auth";
 
 export async function DELETE(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const authError = verifyApiToken(req);
+  if (authError) {
+    return authError;
+  }
+
   try {
     await deleteUser(params.id);
     return NextResponse.json({ success: true });
@@ -19,6 +25,11 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const authError = verifyApiToken(req);
+  if (authError) {
+    return authError;
+  }
+
   try {
     const { deleted } = await req.json();
 

@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { verifyApiToken } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const authError = verifyApiToken(req);
+  if (authError) {
+    return authError;
+  }
+
   const apiKey = process.env.API_KEY;
 
   if (!apiKey) {
