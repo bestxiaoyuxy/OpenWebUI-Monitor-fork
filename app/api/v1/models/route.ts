@@ -61,12 +61,20 @@ export async function GET(req: Request) {
       throw new Error("Invalid JSON response from API");
     }
 
-    console.log("data:", data);
-
     if (!data || !Array.isArray(data.data)) {
       console.error("Unexpected API response structure:", data);
       throw new Error("Unexpected API response structure");
     }
+
+    const apiModelsMap = new Map();
+    data.data.forEach((item) => {
+      apiModelsMap.set(String(item.id), {
+        name: String(item.name),
+        base_model_id: item.info?.base_model_id || "",
+        imageUrl: item.info?.meta?.profile_image_url || "/static/favicon.png",
+        system_prompt: item.info?.params?.system || "",
+      });
+    });
 
     const modelsWithPrices = await getOrCreateModelPrices(
       data.data.map((item) => {
@@ -87,28 +95,46 @@ export async function GET(req: Request) {
       })
     );
 
-    const validModels = data.data.map((item, index) => {
-      let baseModelId = item.info?.base_model_id || "";
-
-      if (!baseModelId && item.id) {
-        const idParts = String(item.id).split(".");
-        if (idParts.length > 1) {
-          baseModelId = idParts[idParts.length - 1];
-        }
-      }
-
-      return {
-        id: modelsWithPrices[index].id,
-        base_model_id: baseModelId,
-        name: modelsWithPrices[index].name,
-        imageUrl: item.info?.meta?.profile_image_url || "/static/favicon.png",
-        system_prompt: item.info?.params?.system || "",
-        input_price: modelsWithPrices[index].input_price,
-        output_price: modelsWithPrices[index].output_price,
-        per_msg_price: modelsWithPrices[index].per_msg_price,
-        updated_at: modelsWithPrices[index].updated_at,
-      };
+    const dbModelsMap = new Map();
+    modelsWithPrices.forEach((model) => {
+      dbModelsMap.set(model.id, {
+        input_price: model.input_price,
+        output_price: model.output_price,
+        per_msg_price: model.per_msg_price,
+        updated_at: model.updated_at,
+      });
     });
+
+    const validModels = Array.from(apiModelsMap.entries()).map(
+      ([id, apiModel]) => {
+        const dbModel = dbModelsMap.get(id) || {
+          input_price: 60,
+          output_price: 60,
+          per_msg_price: -1,
+          updated_at: new Date(),
+        };
+
+        let baseModelId = apiModel.base_model_id;
+        if (!baseModelId && id) {
+          const idParts = String(id).split(".");
+          if (idParts.length > 1) {
+            baseModelId = idParts[idParts.length - 1];
+          }
+        }
+
+        return {
+          id: id,
+          base_model_id: baseModelId,
+          name: apiModel.name,
+          imageUrl: apiModel.imageUrl,
+          system_prompt: apiModel.system_prompt,
+          input_price: dbModel.input_price,
+          output_price: dbModel.output_price,
+          per_msg_price: dbModel.per_msg_price,
+          updated_at: dbModel.updated_at,
+        };
+      }
+    );
 
     return NextResponse.json(validModels);
   } catch (error) {
