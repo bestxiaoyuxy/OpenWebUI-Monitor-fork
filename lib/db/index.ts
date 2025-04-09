@@ -15,7 +15,7 @@ async function ensureModelPricesTableExists() {
 
   await query(
     `CREATE TABLE IF NOT EXISTS model_prices (
-      model_id TEXT PRIMARY KEY,
+      id TEXT PRIMARY KEY,
       model_name TEXT NOT NULL,
       input_price DECIMAL(10, 6) DEFAULT CAST($1 AS DECIMAL(10, 6)),
       output_price DECIMAL(10, 6) DEFAULT CAST($2 AS DECIMAL(10, 6)),
@@ -54,16 +54,16 @@ export async function getOrCreateModelPrice(
     );
 
     const result = await query(
-      `INSERT INTO model_prices (model_id, model_name, per_msg_price, updated_at)
+      `INSERT INTO model_prices (id, model_name, per_msg_price, updated_at)
        VALUES ($1, $2, CAST($3 AS DECIMAL(10, 6)), CURRENT_TIMESTAMP)
-       ON CONFLICT (model_id) DO UPDATE 
+       ON CONFLICT (id) DO UPDATE 
        SET model_name = $2, updated_at = CURRENT_TIMESTAMP
        RETURNING *`,
       [id, name, defaultPerMsgPrice]
     );
 
     return {
-      id: result.rows[0].model_id,
+      id: result.rows[0].id,
       name: result.rows[0].model_name,
       input_price: Number(result.rows[0].input_price),
       output_price: Number(result.rows[0].output_price),

@@ -404,14 +404,14 @@ export async function updateModelPrice(
          output_price = CAST($3 AS NUMERIC(10,6)),
          per_msg_price = CAST($4 AS NUMERIC(10,6)),
          updated_at = CURRENT_TIMESTAMP
-       WHERE model_id = $1
+       WHERE id = $1
        RETURNING *`,
       [id, input_price, output_price, per_msg_price]
     );
 
     if (result.rows[0]) {
       return {
-        id: result.rows[0].model_id,
+        id: result.rows[0].id,
         name: result.rows[0].model_name,
         input_price: Number(result.rows[0].input_price),
         output_price: Number(result.rows[0].output_price),
